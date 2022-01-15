@@ -52,7 +52,7 @@ is 25.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 sumOfSquares :: Integer -> Integer -> Integer
-sumOfSquares x y = (x * x) + (y * y)
+sumOfSquares x y = x * x + y * y
 
 {- | Implement a function that returns the last digit of a given number.
 
@@ -102,7 +102,7 @@ first character) and negative end position should result in an empty
 string.
 -}
 subString :: Int -> Int -> [Char] -> [Char]
-subString start end str = drop start (take (end + 1) str)
+subString start end str = take (end - max start 0 + 1) (drop start str)
 
 {- | Write a function that takes a String — space separated numbers,
 and finds a sum of the numbers inside this string.
@@ -113,16 +113,7 @@ and finds a sum of the numbers inside this string.
 The string contains only spaces and/or numbers.
 -}
 strSum :: [Char] -> Integer
-strSum str = 
-    let list = words str
-        summ = 0
-    in go list summ
-        where
-            go :: [[Char]] -> Integer -> Integer
-            go list summ = 
-                if null list
-                then summ
-                else go (drop 1 list) (summ + read (head list) :: Integer)
+strSum str = sum(map read (words str) :: [Integer])
 
 {- | Write a function that takes a number and a list of numbers and
 returns a string, saying how many elements of the list are strictly
@@ -141,11 +132,11 @@ lowerAndGreater :: Integer -> [Integer] -> [Char]
 lowerAndGreater n list = 
     let greater = 0
         lower = 0
-    in comp n list greater lower
+    in comp list greater lower
         where
-            comp :: Integer -> [Integer] -> Int -> Int -> [Char]
-            comp n list greater lower
+            comp :: [Integer] -> Integer -> Integer -> [Char]
+            comp list greater lower
                 | null list = (show n ++ " is greater than " ++ show greater ++ " elements and lower than " ++ show lower ++ " elements")
-                | n > head list = comp n (drop 1 list) (greater + 1) lower
-                | n < head list = comp n (drop 1 list) greater (lower + 1)
-                | otherwise = comp n (drop 1 list) greater lower
+                | n > head list = comp (drop 1 list) (greater + 1) lower
+                | n < head list = comp (drop 1 list) greater (lower + 1)
+                | otherwise = comp (drop 1 list) greater lower
