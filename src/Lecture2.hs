@@ -49,9 +49,8 @@ zero, you can stop calculating product and return 0 immediately.
 -}
 lazyProduct :: [Int] -> Int
 lazyProduct [] = 1
-lazyProduct (x: xs) 
-    | x == 0 = 0
-    | otherwise = x * lazyProduct xs
+lazyProduct (0 : _) = 0
+lazyProduct (x : xs) = x * lazyProduct xs
 
 {- | Implement a function that duplicates every element in the list.
 
@@ -62,7 +61,7 @@ lazyProduct (x: xs)
 -}
 duplicate :: [a] -> [a]
 duplicate [] = []
-duplicate (x: xs) = x: x: duplicate xs
+duplicate (x : xs) = x : x : duplicate xs
 
 {- | Implement function that takes index and a list and removes the
 element at the given position. Additionally, this function should also
@@ -74,7 +73,23 @@ return the removed element.
 >>> removeAt 10 [1 .. 5]
 (Nothing,[1,2,3,4,5])
 -}
-removeAt = error "TODO"
+{- This is ugly and super slow but couldn't do better.
+I asked you for an error resolve of my another prettier solution,
+and it works fine but it needs pragma ScopedTypeVariables and "forall a ."
+that was not in the lectures yet. So I keep this one until then.
+-}
+removeAt :: Int -> [a] -> (Maybe a, [a])
+removeAt _ [] = (Nothing, [])
+removeAt n lst 
+    | n < 0 = (Nothing, lst)
+    | otherwise = 
+        let newlst = []
+        in go n lst newlst
+            where
+                go :: Int -> [a] -> [a] -> (Maybe a, [a])
+                go _ [] newlst = (Nothing, newlst)
+                go 0 (x : xs) newlst = (Just x, newlst ++ xs)
+                go n (x : xs) newlst = go (n - 1) (xs) (newlst ++ [x])
 
 {- | Write a function that takes a list of lists and returns only
 lists of even lengths.
@@ -85,7 +100,8 @@ lists of even lengths.
 ♫ NOTE: Use eta-reduction and function composition (the dot (.) operator)
   in this function.
 -}
-evenLists = error "TODO"
+evenLists :: [[a]] -> [[a]]
+evenLists = filter (even . length)
 
 {- | The @dropSpaces@ function takes a string containing a single word
 or number surrounded by spaces and removes all leading and trailing
@@ -101,7 +117,8 @@ spaces.
 
 🕯 HINT: look into Data.Char and Prelude modules for functions you may use.
 -}
-dropSpaces = error "TODO"
+dropSpaces :: String -> String
+dropSpaces = (takeWhile (/= ' ') . dropWhile(== ' '))
 
 {- |
 
@@ -164,6 +181,20 @@ data Knight = Knight
     , knightEndurance :: Int
     }
 
+data Color
+    = Red
+    | Black
+    | Green
+
+data Dragon = Dragon
+    { dragonColor :: String
+    , dragonExperience :: Int
+    , dragonGold :: Int
+    , dragonTreasure :: String
+    , dragonHealth :: Int
+    , dragonFirePower :: Int
+    }
+
 dragonFight = error "TODO"
 
 ----------------------------------------------------------------------------
@@ -185,7 +216,11 @@ False
 True
 -}
 isIncreasing :: [Int] -> Bool
-isIncreasing = error "TODO"
+isIncreasing [] = True
+isIncreasing (x : xs)
+    | xs == [] = True
+    | x < head xs = isIncreasing xs
+    | otherwise = False
 
 {- | Implement a function that takes two lists, sorted in the
 increasing order, and merges them into new list, also sorted in the
@@ -198,7 +233,11 @@ verify that.
 [1,2,3,4,7]
 -}
 merge :: [Int] -> [Int] -> [Int]
-merge = error "TODO"
+merge [] right = right
+merge left [] = left
+merge (x : xs) (y : ys)
+    | x > y = [y] ++ merge (x : xs) ys
+    | otherwise = [x] ++ merge xs (y : ys)
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
@@ -215,8 +254,13 @@ The algorithm of merge sort is the following:
 [1,2,3]
 -}
 mergeSort :: [Int] -> [Int]
-mergeSort = error "TODO"
-
+mergeSort [] = []
+mergeSort (x : xs)
+    | xs == [] = [x]
+    | otherwise = 
+        let len = length (x : xs)
+            leftSize = div len 2 + mod len 2
+        in merge (mergeSort(take leftSize (x : xs))) (mergeSort(drop leftSize (x : xs)))
 
 {- | Haskell is famous for being a superb language for implementing
 compilers and interpeters to other programming languages. In the next
