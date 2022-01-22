@@ -176,26 +176,87 @@ You're free to define any helper functions.
 
 -- some help in the beginning ;)
 data Knight = Knight
-    { knightHealth    :: Int
-    , knightAttack    :: Int
-    , knightEndurance :: Int
+    { knightHealth     :: Int
+    , knightAttack     :: Int
+    , knightEndurance  :: Int
+    , knightExperience :: Int
+    , knightGold       :: Int
+    , knightSword      :: Maybe Sword
+    , knightShield     :: Maybe Shield
+    , knightAlive      :: Bool
     }
+    deriving (Show)
 
 data Color
     = Red
     | Black
     | Green
+    deriving (Show, Eq, Ord)
+
+{-
+type RedDragonChest = Chest Shield
+type BlackDragonChest = Chest Sword
+type GreenDragonChest = Chest
+-}
+
+data Sword = Sword
+    { swordAttack :: Int
+    }
+    deriving (Show)
+
+data Shield = Shield
+    { shieldDefense :: Int
+    }   
+    deriving (Show)
+
+data Chest a = Chest
+    { chestGold :: Word
+    , chestTreasure :: a
+    }
+    deriving (Show)
 
 data Dragon = Dragon
-    { dragonColor :: String
+    { dragonColor :: Color
     , dragonExperience :: Int
-    , dragonGold :: Int
-    , dragonTreasure :: String
     , dragonHealth :: Int
     , dragonFirePower :: Int
     }
+    deriving (Show)
 
-dragonFight = error "TODO"
+hatchDragon :: Color -> Dragon
+hatchDragon Red = Dragon Red 100 100 10
+hatchDragon Black = Dragon Black 150 150 15
+hatchDragon Green = Dragon Green 250 250 25
+
+{-
+reward :: Dragon -> Chest a
+reward d
+    | dragonColor d == Red = Chest 100 (Shield 1)
+    | dragonColor d == Black = Chest 150 (Sword 1)
+    | dragonColor d == Green = Chest 250
+-}
+
+restoreKnightHpEnd :: Knight -> Int -> Int -> Knight
+restoreKnightHpEnd k hp end = k {
+    knightHealth = knightHealth k + hp,
+    knightEndurance = knightEndurance k + end
+    }
+
+dragonFight :: Knight -> Dragon -> Knight
+dragonFight k d = 
+    let kHp = knightHealth k
+        kEnd = knightEndurance k
+        dHp = dragonHealth d
+        roundF = 1
+    in go kHp kEnd dHp roundF
+        where
+            go :: Int -> Int -> Int -> Int -> Knight
+            go kHp kEnd dHp roundF
+                | (kHp <= 0) || (knightAlive k == False) = k {knightAlive = False}
+                | dHp <= 0 = k {knightHealth = kHp, knightEndurance = kEnd, knightExperience = knightExperience k + dragonExperience d}
+                | kEnd <= 0 = k {knightHealth = kHp, knightEndurance = 0}
+                | mod roundF 10 == 0 = go (kHp - dragonFirePower d) (kEnd - 1) (dHp - knightAttack k) (roundF + 1)
+                | otherwise = go kHp (kEnd - 1) (dHp - knightAttack k) (roundF + 1)
 
 ----------------------------------------------------------------------------
 -- Challenges
@@ -259,7 +320,7 @@ mergeSort (x : xs)
     | xs == [] = [x]
     | otherwise = 
         let len = length (x : xs)
-            leftSize = div len 2 + mod len 2
+            leftSize = div len 2
         in merge (mergeSort(take leftSize (x : xs))) (mergeSort(drop leftSize (x : xs)))
 
 {- | Haskell is famous for being a superb language for implementing
