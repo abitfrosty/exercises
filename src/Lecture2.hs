@@ -82,14 +82,12 @@ removeAt :: Int -> [a] -> (Maybe a, [a])
 removeAt _ [] = (Nothing, [])
 removeAt n lst 
     | n < 0 = (Nothing, lst)
-    | otherwise = 
-        let newlst = []
-        in go n lst newlst
-            where
-                go :: Int -> [a] -> [a] -> (Maybe a, [a])
-                go _ [] newlst = (Nothing, newlst)
-                go 0 (x : xs) newlst = (Just x, newlst ++ xs)
-                go n (x : xs) newlst = go (n - 1) (xs) (newlst ++ [x])
+    | otherwise = go n lst []
+        where
+            go :: Int -> [a] -> [a] -> (Maybe a, [a])
+            go _ [] newlst = (Nothing, newlst)
+            go 0 (x : xs) newlst = (Just x, newlst ++ xs)
+            go k (x : xs) newlst = go (k - 1) (xs) (newlst ++ [x])
 
 {- | Write a function that takes a list of lists and returns only
 lists of even lengths.
@@ -199,14 +197,10 @@ type BlackDragonChest = Chest Sword
 type GreenDragonChest = Chest
 -}
 
-data Sword = Sword
-    { swordAttack :: Int
-    }
+newtype Sword = Sword Int
     deriving (Show)
-
-data Shield = Shield
-    { shieldDefense :: Int
-    }   
+    
+newtype Shield = Shield Int
     deriving (Show)
 
 data Chest a = Chest
@@ -227,6 +221,9 @@ hatchDragon :: Color -> Dragon
 hatchDragon Red = Dragon Red 100 100 10
 hatchDragon Black = Dragon Black 150 150 15
 hatchDragon Green = Dragon Green 250 250 25
+
+bornKnight :: Int -> Int -> Int -> Knight
+bornKnight hp atk end = Knight hp atk end 0 0 Nothing Nothing True
 
 {-
 reward :: Dragon -> Chest a
@@ -278,10 +275,8 @@ True
 -}
 isIncreasing :: [Int] -> Bool
 isIncreasing [] = True
-isIncreasing (x : xs)
-    | xs == [] = True
-    | x < head xs = isIncreasing xs
-    | otherwise = False
+isIncreasing [_] = True
+isIncreasing (x : y : ys) = x < y && isIncreasing (y : ys)
 
 {- | Implement a function that takes two lists, sorted in the
 increasing order, and merges them into new list, also sorted in the
@@ -297,8 +292,9 @@ merge :: [Int] -> [Int] -> [Int]
 merge [] right = right
 merge left [] = left
 merge (x : xs) (y : ys)
-    | x > y = [y] ++ merge (x : xs) ys
-    | otherwise = [x] ++ merge xs (y : ys)
+    | x > y = y : merge (x : xs) ys
+    | x == y = x : y : merge xs ys
+    | otherwise = x : merge xs (y : ys)
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
@@ -316,12 +312,15 @@ The algorithm of merge sort is the following:
 -}
 mergeSort :: [Int] -> [Int]
 mergeSort [] = []
-mergeSort (x : xs)
-    | xs == [] = [x]
-    | otherwise = 
-        let len = length (x : xs)
-            leftSize = div len 2
-        in merge (mergeSort(take leftSize (x : xs))) (mergeSort(drop leftSize (x : xs)))
+mergeSort ls = go ls (length ls)
+    where
+        go :: [Int] -> Int -> [Int]
+        go [] _ = []
+        go lst 1 = lst
+        go lst len = 
+            let left = div len 2
+                right = left + mod len 2
+            in merge (go (take left lst) left) (go (drop left lst) right)
 
 {- | Haskell is famous for being a superb language for implementing
 compilers and interpeters to other programming languages. In the next
